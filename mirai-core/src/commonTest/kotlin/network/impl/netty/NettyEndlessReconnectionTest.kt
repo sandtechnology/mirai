@@ -18,6 +18,7 @@ import net.mamoe.mirai.internal.test.runBlockingUnit
 import java.net.SocketAddress
 import kotlin.reflect.jvm.javaGetter
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -45,6 +46,8 @@ internal class NettyEndlessReconnectionTest : AbstractNettyNHTest() {
         val state = network::_state.javaGetter!!.apply { isAccessible = true }
             .invoke(network) as NetworkHandlerSupport.BaseStateImpl
 
+        assertNotNull(state) { "state is null" }
+        assertNotNull(state.getCause()) { "state.getCause() is null" }
         assertTrue(state.toString()) { state.getCause()!!.suppressed.size <= 1 } // might be zero if just created since at this time network is still running.
         // size <= 1 means duplicates are dropped.
 
