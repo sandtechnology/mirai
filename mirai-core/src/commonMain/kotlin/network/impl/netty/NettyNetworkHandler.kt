@@ -424,6 +424,7 @@ internal open class NettyNetworkHandler(
          * millis
          */
         @JvmField
+        @Volatile
         var RECONNECT_DELAY = systemProp("mirai.network.reconnect.delay", 5000)
     }
 }
