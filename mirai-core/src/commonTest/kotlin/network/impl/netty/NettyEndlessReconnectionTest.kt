@@ -40,14 +40,14 @@ internal class NettyEndlessReconnectionTest : AbstractNettyNHTest() {
         val r = NettyNetworkHandler.Companion.RECONNECT_DELAY
         NettyNetworkHandler.Companion.RECONNECT_DELAY = 0
         network.setStateConnecting() // will connect endlessly and create a massive amount of exceptions
-        delay(10000) // if exceptions are ignored by ExceptionCollector, memory usage will not exceed limitation.
+        delay(50000) // if exceptions are ignored by ExceptionCollector, memory usage will not exceed limitation.
 
         @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
         val state = network::_state.javaGetter!!.apply { isAccessible = true }
             .invoke(network) as NetworkHandlerSupport.BaseStateImpl
 
-        assertNotNull(state) { "state is null" }
-        assertNotNull(state.getCause()) { "state.getCause() is null" }
+        assertNotNull(state, "state is null")
+        assertNotNull(state.getCause(), "state.getCause() is null")
         assertTrue(state.toString()) { state.getCause()!!.suppressed.size <= 1 } // might be zero if just created since at this time network is still running.
         // size <= 1 means duplicates are dropped.
 
