@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerContext
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerFactory
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerSupport
+import net.mamoe.mirai.internal.network.handler.logger
 import net.mamoe.mirai.internal.test.runBlockingUnit
 import java.net.SocketAddress
 import kotlin.reflect.jvm.javaGetter
@@ -30,7 +31,9 @@ internal class NettyEndlessReconnectionTest : AbstractNettyNHTest() {
         override fun create(context: NetworkHandlerContext, address: SocketAddress): TestNettyNH {
             return object : TestNettyNH(context, address) {
                 override suspend fun createConnection(decodePipeline: PacketDecodePipeline): Channel =
-                    error("fail")
+                    logger.debug("Reconnecting").let {
+                        throw IllegalStateException("fail")
+                    }
             }
         }
     }
@@ -41,6 +44,7 @@ internal class NettyEndlessReconnectionTest : AbstractNettyNHTest() {
         NettyNetworkHandler.Companion.RECONNECT_DELAY = 0
         network.setStateConnecting() // will connect endlessly and create a massive amount of exceptions
         delay(10000) // if exceptions are ignored by ExceptionCollector, memory usage will not exceed limitation.
+
         @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
         val state = network::_state.javaGetter!!.apply { isAccessible = true }
             .invoke(network) as NetworkHandlerSupport.BaseStateImpl
