@@ -10,7 +10,7 @@
 package net.mamoe.mirai.internal.network.impl.netty
 
 import io.netty.channel.Channel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerContext
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerFactory
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerSupport
@@ -40,15 +40,22 @@ internal class NettyEndlessReconnectionTest : AbstractNettyNHTest() {
 
     @Test
     fun `massive reconnection`() = runBlockingUnit {
+        //FIXME: It no longer valid since it won't reconnect again
         val r = NettyNetworkHandler.Companion.RECONNECT_DELAY
-        NettyNetworkHandler.Companion.RECONNECT_DELAY = 0
+        NettyNetworkHandler.Companion.RECONNECT_DELAY = 1
         network.setStateConnecting() // will connect endlessly and create a massive amount of exceptions
-        delay(10000) // if exceptions are ignored by ExceptionCollector, memory usage will not exceed limitation.
 
-        @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-        val state = network::_state.javaGetter!!.apply { isAccessible = true }
-            .invoke(network) as NetworkHandlerSupport.BaseStateImpl
-
+        val state = withTimeout(50000) {
+            @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+            var state = network::_state.javaGetter!!.apply { isAccessible = true }
+                .invoke(network) as NetworkHandlerSupport.BaseStateImpl
+            while (state.getCause() == null) {
+                @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+                state = network::_state.javaGetter!!.apply { isAccessible = true }
+                    .invoke(network) as NetworkHandlerSupport.BaseStateImpl
+            }
+            state
+        }
         assertNotNull(state, "state is null")
         assertNotNull(state.getCause(), "state.getCause() is null, current state=${state.correspondingState}")
         assertTrue(state.toString()) { state.getCause()!!.suppressed.size <= 1 } // might be zero if just created since at this time network is still running.
