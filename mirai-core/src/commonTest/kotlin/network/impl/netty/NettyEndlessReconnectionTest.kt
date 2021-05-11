@@ -38,12 +38,9 @@ internal class NettyEndlessReconnectionTest : AbstractNettyNHTest() {
     @Test
     fun `massive reconnection`() = runBlockingUnit {
         val r = NettyNetworkHandler.Companion.RECONNECT_DELAY
-        assert(r > 0L) { "RECONNECT_DELAY less than zero, current value is $r" }
         NettyNetworkHandler.Companion.RECONNECT_DELAY = 0
         network.setStateConnecting() // will connect endlessly and create a massive amount of exceptions
-        delay(100000) // if exceptions are ignored by ExceptionCollector, memory usage will not exceed limitation.
-        NettyNetworkHandler.Companion.RECONNECT_DELAY = Long.MAX_VALUE //maximum the delay, stop reconnecting
-        delay(100000) // wait for reconnecting
+        delay(10000) // if exceptions are ignored by ExceptionCollector, memory usage will not exceed limitation.
         @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
         val state = network::_state.javaGetter!!.apply { isAccessible = true }
             .invoke(network) as NetworkHandlerSupport.BaseStateImpl
