@@ -268,7 +268,7 @@ internal open class NettyNetworkHandler(
                     }
                 }
             }
-            connectResult.join()
+            runBlocking { connectResult.join() }
 
         }
 
