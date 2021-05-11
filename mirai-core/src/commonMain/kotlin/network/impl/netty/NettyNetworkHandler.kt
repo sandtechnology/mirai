@@ -268,6 +268,7 @@ internal open class NettyNetworkHandler(
                     }
                 }
             }
+            connectResult.join()
 
         }
 

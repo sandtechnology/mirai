@@ -217,6 +217,7 @@ internal abstract class NetworkHandlerSupport(
      * You may need to call [BaseStateImpl.resumeConnection] to activate the new state, as states are lazy.
      */
     @JvmName("setState1")
+    @Synchronized
     protected fun <S : BaseStateImpl> setState(newType: KClass<S>, new: () -> S): S? =
         @OptIn(TestOnly::class)
         setStateImpl(newType as KClass<S>?, new)
