@@ -11,6 +11,7 @@ package net.mamoe.mirai.internal.network.impl.netty
 
 import io.netty.channel.Channel
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerContext
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerFactory
 import net.mamoe.mirai.internal.network.handler.NetworkHandlerSupport
@@ -42,18 +43,17 @@ internal class NettyEndlessReconnectionTest : AbstractNettyNHTest() {
     fun `massive reconnection`() = runBlockingUnit {
         //FIXME: It no longer valid since it won't reconnect again
         val r = NettyNetworkHandler.Companion.RECONNECT_DELAY
-        NettyNetworkHandler.Companion.RECONNECT_DELAY = 1
+        NettyNetworkHandler.Companion.RECONNECT_DELAY = 0
         network.setStateConnecting() // will connect endlessly and create a massive amount of exceptions
 
         val state = withTimeout(50000) {
-            @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-            var state = network::_state.javaGetter!!.apply { isAccessible = true }
-                .invoke(network) as NetworkHandlerSupport.BaseStateImpl
-            while (state.getCause() == null) {
+            var state: NetworkHandlerSupport.BaseStateImpl
+            do {
                 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
                 state = network::_state.javaGetter!!.apply { isAccessible = true }
                     .invoke(network) as NetworkHandlerSupport.BaseStateImpl
-            }
+                yield()
+            } while (state.getCause() == null)
             state
         }
         assertNotNull(state, "state is null")
